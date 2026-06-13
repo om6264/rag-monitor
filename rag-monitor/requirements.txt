@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pypdf
+rank-bm25
+groq
+python-dotenv
+python-multipart
