@@ -6,645 +6,410 @@
 <title>RAG Monitor</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;
+  --s1:#0f0f17;
+  --s2:#16161f;
+  --s3:#1c1c28;
+  --border:#2a2a3a;
+  --border2:#38384a;
+  --text:#e2e2ec;
+  --muted:#6b6b82;
+  --dim:#4a4a60;
+  --accent:#6366f1;
+  --accent-bg:rgba(99,102,241,0.08);
+  --accent-border:rgba(99,102,241,0.25);
+  --green:#22d3a0;
+  --green-bg:rgba(34,211,160,0.07);
+  --amber:#f59e0b;
+  --amber-bg:rgba(245,158,11,0.08);
+  --red:#f87171;
+  --red-bg:rgba(248,113,113,0.07);
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:grid;grid-template-columns:256px 1fr;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
 
-  :root {
-    --bg: #0d0d0f;
-    --surface: #141416;
-    --border: #232328;
-    --border-bright: #35353d;
-    --text: #e8e8ed;
-    --muted: #6b6b78;
-    --accent: #7c6af7;
-    --accent-dim: rgba(124,106,247,0.12);
-    --green: #3ecf8e;
-    --green-dim: rgba(62,207,142,0.10);
-    --amber: #f59e0b;
-    --amber-dim: rgba(245,158,11,0.10);
-    --red: #f87171;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'Inter', sans-serif;
-  }
+/* TOPBAR */
+header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:var(--s1)}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.02em}
+.logo-pulse{width:8px;height:8px;border-radius:50%;background:var(--accent);position:relative}
+.logo-pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid var(--accent);animation:ripple 2s infinite;opacity:0}
+@keyframes ripple{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.2);opacity:0}}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.pdf-chip{display:none;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--green);background:var(--green-bg);border:1px solid rgba(34,211,160,.2);padding:3px 10px;border-radius:5px}
+.pdf-chip svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.reset-btn{font-size:11px;font-family:var(--mono);color:var(--muted);background:transparent;border:1px solid var(--border2);padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s}
+.reset-btn:hover{color:var(--red);border-color:var(--red)}
 
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    grid-template-rows: auto 1fr;
-  }
+/* SIDEBAR */
+aside{border-right:1px solid var(--border);background:var(--s1);padding:20px 16px;display:flex;flex-direction:column;gap:24px;overflow-y:auto}
+.sec-label{font-size:9px;font-family:var(--mono);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
 
-  /* ── HEADER ── */
-  header {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 28px;
-    height: 56px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-  }
-  .logo {
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--mono);
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    color: var(--text);
-  }
-  .logo-dot {
-    width: 8px; height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+/* Upload */
+.upload-zone{border:1px dashed var(--border2);border-radius:8px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-bg)}
+.upload-zone input{display:none}
+.upload-icon{width:32px;height:32px;border-radius:8px;background:var(--s3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:var(--muted)}
+.upload-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5}
+.upload-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px}
+.upload-sub{font-size:11px;color:var(--muted)}
 
-  .header-right {
-    display: flex; align-items: center; gap: 16px;
-  }
-  .pdf-badge {
-    font-family: var(--mono); font-size: 11px;
-    color: var(--green);
-    background: var(--green-dim);
-    border: 1px solid rgba(62,207,142,0.2);
-    padding: 3px 10px; border-radius: 4px;
-    display: none;
-  }
-  .btn-ghost {
-    font-family: var(--mono); font-size: 11px;
-    color: var(--muted); background: transparent;
-    border: 1px solid var(--border-bright);
-    padding: 4px 12px; border-radius: 4px;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .btn-ghost:hover { color: var(--red); border-color: var(--red); }
+/* Query */
+textarea{width:100%;min-height:76px;resize:vertical;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:9px 11px;font-family:var(--sans);font-size:12px;color:var(--text);outline:none;line-height:1.5;transition:border-color .15s}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--muted)}
+.ask-btn{width:100%;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.04em;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.ask-btn:hover{opacity:.85}
+.ask-btn:disabled{opacity:.35;cursor:not-allowed}
+.ask-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
 
-  /* ── SIDEBAR ── */
-  aside {
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    padding: 24px 20px;
-    display: flex; flex-direction: column; gap: 28px;
-    overflow-y: auto;
-  }
+/* Mini stats */
+.mini-stats{display:flex;flex-direction:column;gap:6px}
+.mini-stat{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:var(--bg);border:1px solid var(--border);border-radius:7px}
+.ms-label{font-size:11px;color:var(--muted)}
+.ms-value{font-family:var(--mono);font-size:12px;font-weight:500}
 
-  .section-label {
-    font-family: var(--mono); font-size: 10px;
-    font-weight: 500; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--muted);
-    margin-bottom: 12px;
-  }
+/* Error */
+.err{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--red);display:none;margin-top:8px}
+.err.show{display:block}
 
-  /* Upload */
-  .upload-zone {
-    border: 1px dashed var(--border-bright);
-    border-radius: 8px; padding: 20px 16px;
-    text-align: center; cursor: pointer;
-    transition: all 0.2s; position: relative;
-  }
-  .upload-zone:hover, .upload-zone.dragover {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-  }
-  .upload-zone input { display: none; }
-  .upload-icon { font-size: 22px; margin-bottom: 8px; }
-  .upload-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
-  .upload-text strong { color: var(--text); font-weight: 500; }
+/* MAIN */
+main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
-  /* Ask */
-  .ask-section { display: flex; flex-direction: column; gap: 10px; }
-  textarea {
-    width: 100%; min-height: 80px; resize: vertical;
-    background: var(--bg); border: 1px solid var(--border-bright);
-    border-radius: 6px; padding: 10px 12px;
-    font-family: var(--sans); font-size: 13px; color: var(--text);
-    transition: border-color 0.15s; outline: none;
-    line-height: 1.5;
-  }
-  textarea:focus { border-color: var(--accent); }
-  textarea::placeholder { color: var(--muted); }
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--s1);padding:0 24px}
+.tab{font-size:12px;font-family:var(--mono);color:var(--muted);background:none;border:none;padding:15px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.03em}
+.tab.on{color:var(--text);border-bottom-color:var(--accent)}
+.tab:hover:not(.on){color:var(--text)}
 
-  .btn-primary {
-    width: 100%; padding: 10px;
-    background: var(--accent); color: #fff;
-    border: none; border-radius: 6px;
-    font-family: var(--mono); font-size: 12px;
-    font-weight: 500; letter-spacing: 0.04em;
-    cursor: pointer; transition: opacity 0.15s;
-  }
-  .btn-primary:hover { opacity: 0.85; }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Tab panels */
+.panel{display:none;flex:1;overflow-y:auto;padding:24px}
+.panel.on{display:flex;flex-direction:column;gap:20px}
 
-  /* Stat mini cards in sidebar */
-  .mini-stats { display: flex; flex-direction: column; gap: 8px; }
-  .mini-stat {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-  }
-  .mini-stat-label { font-size: 11px; color: var(--muted); }
-  .mini-stat-value { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+/* Answer card */
+.answer-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:none}
+.answer-card.show{display:block}
+.answer-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--s1)}
+.chip{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:4px;display:flex;align-items:center;gap:4px}
+.chip-lat{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.chip-cost{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,211,160,.2)}
+.chip-src{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.answer-body{padding:16px;font-size:13px;line-height:1.75;color:var(--text)}
 
-  /* ── MAIN ── */
-  main {
-    display: flex; flex-direction: column;
-    overflow: hidden;
-  }
+/* Thinking */
+.thinking{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.dots span{display:inline-block;width:5px;height:5px;background:var(--muted);border-radius:50%;margin:0 2px;animation:bounce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
 
-  /* Tabs */
-  .tabs {
-    display: flex; gap: 0;
-    border-bottom: 1px solid var(--border);
-    padding: 0 28px;
-    background: var(--surface);
-  }
-  .tab {
-    font-family: var(--mono); font-size: 12px;
-    color: var(--muted); background: none; border: none;
-    padding: 16px 20px; cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.15s;
-    letter-spacing: 0.04em;
-  }
-  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
-  .tab:hover:not(.active) { color: var(--text); }
+/* Chat history */
+.history-head{font-size:9px;font-family:var(--mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.chat-list{display:flex;flex-direction:column;gap:12px}
+.chat-item{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:13px 16px}
+.chat-q{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;align-items:baseline;gap:6px}
+.chat-q span{color:var(--dim);font-family:var(--mono);font-size:10px}
+.chat-a{font-size:12px;line-height:1.7;color:var(--text);margin-bottom:10px}
+.chat-chips{display:flex;gap:7px;flex-wrap:wrap}
 
-  .tab-content { display: none; flex: 1; overflow-y: auto; padding: 28px; }
-  .tab-content.active { display: flex; flex-direction: column; gap: 24px; }
+/* METRICS TAB */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.metric-card{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:16px}
+.metric-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.metric-value{font-family:var(--mono);font-size:24px;font-weight:500}
+.metric-value.accent{color:var(--accent)}
+.metric-value.green{color:var(--green)}
+.metric-value.amber{color:var(--amber)}
+.metric-trend{font-size:10px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
 
-  /* Answer panel */
-  .answer-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    display: none;
-  }
-  .answer-card.visible { display: block; }
+/* Chart */
+.chart-card{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:18px}
+.chart-title{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.chart-title::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--accent);display:block}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:96px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .3s}
+.bar-label{font-family:var(--mono);font-size:9px;color:var(--dim)}
+.chart-legend{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-family:var(--mono)}
+.legend-dot{width:8px;height:8px;border-radius:2px}
 
-  .answer-meta {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-  }
-  .chip {
-    font-family: var(--mono); font-size: 11px;
-    padding: 3px 10px; border-radius: 4px;
-    display: flex; align-items: center; gap: 5px;
-  }
-  .chip-latency { background: var(--amber-dim); color: var(--amber); }
-  .chip-cost { background: var(--green-dim); color: var(--green); }
-  .chip-sources { background: var(--accent-dim); color: var(--accent); }
+/* Threshold line */
+.chart-wrap{position:relative}
+.threshold-line{position:absolute;left:0;right:0;border-top:1px dashed rgba(245,158,11,.4);pointer-events:none}
+.threshold-label{position:absolute;right:0;font-size:9px;font-family:var(--mono);color:var(--amber);background:var(--s2);padding:0 4px}
 
-  .answer-body { padding: 18px; font-size: 14px; line-height: 1.75; }
-  .answer-body .thinking {
-    display: flex; align-items: center; gap: 8px;
-    color: var(--muted); font-size: 13px;
-  }
-  .dots span {
-    display: inline-block; width: 5px; height: 5px;
-    background: var(--muted); border-radius: 50%; margin: 0 2px;
-    animation: bounce 1.2s infinite;
-  }
-  .dots span:nth-child(2) { animation-delay: 0.2s; }
-  .dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+/* LOG TABLE */
+.log-wrap{background:var(--s2);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.log-table{width:100%;border-collapse:collapse;font-size:11px}
+.log-table th{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--s1)}
+.log-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.log-table tr:last-child td{border-bottom:none}
+.log-table tr:hover td{background:rgba(255,255,255,.015)}
+.status-ok{color:var(--green);font-family:var(--mono);font-size:11px}
+.status-fail{color:var(--red);font-family:var(--mono);font-size:11px}
 
-  /* Chat history */
-  .chat-history { display: flex; flex-direction: column; gap: 16px; }
-  .chat-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px; padding: 14px 18px;
-  }
-  .chat-q { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-  .chat-q strong { color: var(--text); font-weight: 500; }
-  .chat-a { font-size: 13px; line-height: 1.65; color: var(--text); }
-  .chat-chips { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-
-  /* Metrics tab */
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
-  }
-  .metric-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 18px;
-  }
-  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
-  .metric-value { font-family: var(--mono); font-size: 26px; font-weight: 500; }
-  .metric-value.accent { color: var(--accent); }
-  .metric-value.green { color: var(--green); }
-  .metric-value.amber { color: var(--amber); }
-
-  /* Bar chart */
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-  }
-  .chart-title { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px; }
-  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; }
-  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-  .bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 3px; transition: height 0.3s; }
-  .bar.latency-bar { background: var(--amber); opacity: 0.8; }
-  .bar.cost-bar { background: var(--green); opacity: 0.8; }
-  .bar-label { font-family: var(--mono); font-size: 9px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; }
-
-  /* Log table */
-  .log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .log-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-  .log-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  .log-table tr:last-child td { border-bottom: none; }
-  .log-table tr:hover td { background: rgba(255,255,255,0.02); }
-  .mono { font-family: var(--mono); }
-  .ok { color: var(--green); }
-  .fail { color: var(--red); }
-
-  /* Empty state */
-  .empty {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 12px;
-    padding: 60px 0; color: var(--muted);
-    font-size: 13px; text-align: center;
-  }
-  .empty-icon { font-size: 32px; opacity: 0.4; }
-
-  .error-msg {
-    background: rgba(248,113,113,0.08);
-    border: 1px solid rgba(248,113,113,0.2);
-    border-radius: 6px; padding: 10px 14px;
-    font-size: 13px; color: var(--red);
-    display: none;
-  }
-  .error-msg.visible { display: block; }
+/* Empty */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:48px 0;color:var(--muted);font-size:12px;text-align:center}
+.empty-icon{font-size:28px;opacity:.35}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-dot"></div>
+    <div class="logo-pulse"></div>
     rag_monitor
   </div>
-  <div class="header-right">
-    <div class="pdf-badge" id="pdfBadge">no file</div>
-    <button class="btn-ghost" onclick="resetLogs()">reset logs</button>
+  <div class="hdr-right">
+    <div class="pdf-chip" id="pdfChip">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span id="pdfName">—</span>
+    </div>
+    <button class="reset-btn" onclick="resetLogs()">reset logs</button>
   </div>
 </header>
 
 <aside>
   <div>
-    <div class="section-label">Document</div>
+    <div class="sec-label">Document</div>
     <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
       <input type="file" id="fileInput" accept=".pdf" onchange="handleUpload(this.files[0])"/>
-      <div class="upload-icon">📄</div>
-      <div class="upload-text"><strong>Click to upload PDF</strong><br/>or drag and drop</div>
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="upload-title">Upload PDF</div>
+      <div class="upload-sub">Click or drag and drop</div>
     </div>
   </div>
 
-  <div class="ask-section">
-    <div class="section-label">Query</div>
-    <textarea id="questionInput" placeholder="Ask something from the document..." rows="4"></textarea>
-    <div class="error-msg" id="errorMsg"></div>
-    <button class="btn-primary" id="askBtn" onclick="askQuestion()" disabled>→ Ask</button>
+  <div>
+    <div class="sec-label">Query</div>
+    <textarea id="qInput" placeholder="Ask something from the document..." rows="4"></textarea>
+    <div class="err" id="errMsg"></div>
+    <button class="ask-btn" id="askBtn" onclick="askQuestion()" disabled>
+      <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      Ask
+    </button>
   </div>
 
   <div>
-    <div class="section-label">Live Stats</div>
-    <div class="mini-stats" id="miniStats">
-      <div class="mini-stat">
-        <span class="mini-stat-label">queries</span>
-        <span class="mini-stat-value" id="statTotal">—</span>
-      </div>
-      <div class="mini-stat">
-        <span class="mini-stat-label">avg latency</span>
-        <span class="mini-stat-value" id="statAvgLat" style="color:var(--amber)">—</span>
-      </div>
-      <div class="mini-stat">
-        <span class="mini-stat-label">total cost</span>
-        <span class="mini-stat-value" id="statCost" style="color:var(--green)">—</span>
-      </div>
-      <div class="mini-stat">
-        <span class="mini-stat-label">success rate</span>
-        <span class="mini-stat-value" id="statSuccess" style="color:var(--accent)">—</span>
-      </div>
+    <div class="sec-label">Live stats</div>
+    <div class="mini-stats">
+      <div class="mini-stat"><span class="ms-label">queries</span><span class="ms-value" id="sTotal" style="color:var(--accent)">—</span></div>
+      <div class="mini-stat"><span class="ms-label">avg latency</span><span class="ms-value" id="sLat" style="color:var(--amber)">—</span></div>
+      <div class="mini-stat"><span class="ms-label">total cost</span><span class="ms-value" id="sCost" style="color:var(--green)">—</span></div>
+      <div class="mini-stat"><span class="ms-label">success rate</span><span class="ms-value" id="sRate" style="color:var(--accent)">—</span></div>
     </div>
   </div>
 </aside>
 
 <main>
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('qa')">Q&A</button>
-    <button class="tab" onclick="switchTab('metrics')">Metrics</button>
-    <button class="tab" onclick="switchTab('logs')">Query Logs</button>
+    <button class="tab on" onclick="switchTab('qa',this)">Q&A</button>
+    <button class="tab" onclick="switchTab('metrics',this)">Metrics</button>
+    <button class="tab" onclick="switchTab('logs',this)">Query Logs</button>
   </div>
 
-  <!-- Q&A TAB -->
-  <div class="tab-content active" id="tab-qa">
-    <div class="answer-card" id="answerCard">
-      <div class="answer-meta" id="answerMeta"></div>
-      <div class="answer-body" id="answerBody">
-        <div class="thinking">
-          Thinking <div class="dots"><span></span><span></span><span></span></div>
-        </div>
+  <!-- Q&A -->
+  <div class="panel on" id="panel-qa">
+    <div class="answer-card" id="ansCard">
+      <div class="answer-meta" id="ansMeta"></div>
+      <div class="answer-body" id="ansBody">
+        <div class="thinking">Processing <div class="dots"><span></span><span></span><span></span></div></div>
       </div>
     </div>
-
     <div>
-      <div class="section-label" style="margin-bottom:14px">Recent answers</div>
-      <div class="chat-history" id="chatHistory">
-        <div class="empty">
-          <div class="empty-icon">💬</div>
-          Upload a PDF and ask your first question.
-        </div>
+      <div class="history-head">Recent answers</div>
+      <div class="chat-list" id="chatList">
+        <div class="empty"><div class="empty-icon">💬</div>Upload a PDF and ask your first question.</div>
       </div>
     </div>
   </div>
 
-  <!-- METRICS TAB -->
-  <div class="tab-content" id="tab-metrics">
-    <div class="metrics-grid" id="metricsGrid">
-      <div class="metric-card">
-        <div class="metric-label">Total Queries</div>
-        <div class="metric-value accent" id="m-total">0</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Avg Latency</div>
-        <div class="metric-value amber" id="m-avg">0 ms</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">P50 Latency</div>
-        <div class="metric-value amber" id="m-p50">0 ms</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">P95 Latency</div>
-        <div class="metric-value amber" id="m-p95">0 ms</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Total Cost</div>
-        <div class="metric-value green" id="m-cost">$0</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Avg Cost/Query</div>
-        <div class="metric-value green" id="m-avg-cost">$0</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Success Rate</div>
-        <div class="metric-value accent" id="m-success">0%</div>
-      </div>
+  <!-- METRICS -->
+  <div class="panel" id="panel-metrics">
+    <div class="metric-grid">
+      <div class="metric-card"><div class="metric-label">Total queries</div><div class="metric-value accent" id="mTotal">0</div><div class="metric-trend">all time</div></div>
+      <div class="metric-card"><div class="metric-label">Avg latency</div><div class="metric-value amber" id="mAvg">0 ms</div><div class="metric-trend">mean</div></div>
+      <div class="metric-card"><div class="metric-label">P50 latency</div><div class="metric-value amber" id="mP50">0 ms</div><div class="metric-trend">median</div></div>
+      <div class="metric-card"><div class="metric-label">P95 latency</div><div class="metric-value amber" id="mP95">0 ms</div><div class="metric-trend">95th pct</div></div>
+      <div class="metric-card"><div class="metric-label">Total cost</div><div class="metric-value green" id="mCost">$0</div><div class="metric-trend">USD</div></div>
+      <div class="metric-card"><div class="metric-label">Avg cost/query</div><div class="metric-value green" id="mAvgCost">$0</div><div class="metric-trend">per call</div></div>
+      <div class="metric-card"><div class="metric-label">Success rate</div><div class="metric-value accent" id="mSuccess">0%</div><div class="metric-trend">pass/fail</div></div>
     </div>
 
     <div class="chart-card">
       <div class="chart-title">Latency per query (ms)</div>
-      <div class="bar-chart" id="latencyChart">
-        <div class="empty" style="width:100%">No data yet.</div>
+      <div class="chart-wrap" style="height:96px">
+        <div class="bar-chart" id="latChart"><div class="empty" style="width:100%;padding:20px 0">No data yet.</div></div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Normal</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Slow (&gt;800ms)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Very slow (&gt;1500ms)</div>
       </div>
     </div>
 
     <div class="chart-card">
-      <div class="chart-title">Cost per query (USD ×10⁻⁶)</div>
-      <div class="bar-chart" id="costChart">
-        <div class="empty" style="width:100%">No data yet.</div>
-      </div>
+      <div class="chart-title">Cost per query (USD × 10⁻⁶)</div>
+      <div class="bar-chart" id="costChart" style="height:96px"><div class="empty" style="width:100%;padding:20px 0">No data yet.</div></div>
     </div>
   </div>
 
-  <!-- LOGS TAB -->
-  <div class="tab-content" id="tab-logs">
-    <div class="chart-card" style="overflow-x:auto">
-      <table class="log-table" id="logTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Time</th>
-            <th>Query</th>
-            <th>Latency</th>
-            <th>Cost</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="logBody">
-          <tr><td colspan="6">
-            <div class="empty"><div class="empty-icon">📋</div>No queries logged yet.</div>
-          </td></tr>
-        </tbody>
+  <!-- LOGS -->
+  <div class="panel" id="panel-logs">
+    <div class="log-wrap">
+      <table class="log-table">
+        <thead><tr><th>ID</th><th>Time</th><th>Query</th><th>Latency</th><th>Cost</th><th>Status</th></tr></thead>
+        <tbody id="logBody"><tr><td colspan="6"><div class="empty"><div class="empty-icon">📋</div>No queries logged yet.</div></td></tr></tbody>
       </table>
     </div>
   </div>
 </main>
 
 <script>
-const API = "";  // same origin
+const API="";
+let history=[];
+let hasPDF=false;
 
-let chatItems = [];
-let uploadedFile = false;
+const zone=document.getElementById('uploadZone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover')});
+zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('dragover');if(e.dataTransfer.files[0])handleUpload(e.dataTransfer.files[0])});
 
-// ── Drag/drop upload ──
-const zone = document.getElementById('uploadZone');
-zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-zone.addEventListener('drop', e => {
-  e.preventDefault(); zone.classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file) handleUpload(file);
-});
-
-async function handleUpload(file) {
-  if (!file) return;
-  const fd = new FormData();
-  fd.append('file', file);
-  zone.innerHTML = `<div class="upload-icon">⏳</div><div class="upload-text">Uploading...</div>`;
-  try {
-    const res = await fetch(`${API}/upload`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Upload failed');
-    zone.innerHTML = `<div class="upload-icon">✅</div><div class="upload-text"><strong>${file.name}</strong><br/>${data.chunks} chunks indexed</div>`;
-    document.getElementById('pdfBadge').textContent = file.name;
-    document.getElementById('pdfBadge').style.display = 'block';
-    document.getElementById('askBtn').disabled = false;
-    uploadedFile = true;
-    showError('');
-  } catch(e) {
-    zone.innerHTML = `<div class="upload-icon">❌</div><div class="upload-text">${e.message}<br/><small>Click to retry</small></div>`;
-    zone.onclick = () => document.getElementById('fileInput').click();
+async function handleUpload(file){
+  if(!file)return;
+  zone.innerHTML=`<div class="upload-icon"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--amber);fill:none;stroke-width:1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="upload-title">Uploading...</div><div class="upload-sub">${file.name}</div>`;
+  const fd=new FormData();fd.append('file',file);
+  try{
+    const res=await fetch(`${API}/upload`,{method:'POST',body:fd});
+    const d=await res.json();
+    if(!res.ok)throw new Error(d.detail||'Upload failed');
+    zone.innerHTML=`<div class="upload-icon" style="background:var(--green-bg);border-color:rgba(34,211,160,.3)"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--green);fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="upload-title" style="color:var(--green)">${file.name}</div><div class="upload-sub">${d.chunks} chunks indexed</div>`;
+    const chip=document.getElementById('pdfChip');
+    chip.style.display='flex';
+    document.getElementById('pdfName').textContent=file.name;
+    document.getElementById('askBtn').disabled=false;
+    hasPDF=true;
+    showErr('');
+  }catch(e){
+    zone.innerHTML=`<div class="upload-icon" style="background:var(--red-bg)"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--red);fill:none;stroke-width:2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><div class="upload-title" style="color:var(--red)">Upload failed</div><div class="upload-sub">${e.message}</div>`;
+    zone.onclick=()=>document.getElementById('fileInput').click();
   }
 }
 
-// ── Ask ──
-async function askQuestion() {
-  const q = document.getElementById('questionInput').value.trim();
-  if (!q) return;
-  if (!uploadedFile) { showError('Upload a PDF first.'); return; }
-
-  showError('');
-  const card = document.getElementById('answerCard');
-  const body = document.getElementById('answerBody');
-  const meta = document.getElementById('answerMeta');
-
-  card.classList.add('visible');
-  body.innerHTML = `<div class="thinking">Thinking <div class="dots"><span></span><span></span><span></span></div></div>`;
-  meta.innerHTML = '';
-
-  document.getElementById('askBtn').disabled = true;
-
-  try {
-    const res = await fetch(`${API}/query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: q })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Query failed');
-
-    body.innerHTML = data.answer.replace(/\n/g, '<br/>');
-    meta.innerHTML = `
-      <span class="chip chip-latency">⚡ ${data.latency_ms} ms</span>
-      <span class="chip chip-cost">💰 $${data.cost_usd.toFixed(8)}</span>
-      <span class="chip chip-sources">📄 ${data.sources.length} sources</span>
-    `;
-
-    // Add to chat history
-    addChatItem(q, data.answer, data.latency_ms, data.cost_usd, data.sources.length);
-    document.getElementById('questionInput').value = '';
+async function askQuestion(){
+  const q=document.getElementById('qInput').value.trim();
+  if(!q){showErr('Type a question first.');return}
+  if(!hasPDF){showErr('Upload a PDF first.');return}
+  showErr('');
+  const card=document.getElementById('ansCard');
+  const body=document.getElementById('ansBody');
+  const meta=document.getElementById('ansMeta');
+  card.classList.add('show');
+  body.innerHTML=`<div class="thinking">Processing <div class="dots"><span></span><span></span><span></span></div></div>`;
+  meta.innerHTML='';
+  document.getElementById('askBtn').disabled=true;
+  try{
+    const res=await fetch(`${API}/query`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+    const d=await res.json();
+    if(!res.ok)throw new Error(d.detail||'Query failed');
+    body.innerHTML=d.answer.replace(/\n/g,'<br/>');
+    meta.innerHTML=`<span class="chip chip-lat">⚡ ${d.latency_ms} ms</span><span class="chip chip-cost">💰 $${d.cost_usd.toFixed(8)}</span><span class="chip chip-src">📄 ${d.sources.length} sources</span>`;
+    history.unshift({q,a:d.answer,lat:d.latency_ms,cost:d.cost_usd,srcs:d.sources.length});
+    renderHistory();
+    document.getElementById('qInput').value='';
     refreshMetrics();
-  } catch(e) {
-    body.innerHTML = '';
-    card.classList.remove('visible');
-    showError(e.message);
+  }catch(e){
+    body.innerHTML='';
+    card.classList.remove('show');
+    showErr(e.message);
   }
-
-  document.getElementById('askBtn').disabled = false;
+  document.getElementById('askBtn').disabled=false;
 }
 
-document.getElementById('questionInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) askQuestion();
-});
+document.getElementById('qInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))askQuestion()});
 
-function addChatItem(q, a, lat, cost, srcs) {
-  chatItems.unshift({ q, a, lat, cost, srcs });
-  renderChat();
-}
-
-function renderChat() {
-  const el = document.getElementById('chatHistory');
-  if (!chatItems.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">💬</div>Upload a PDF and ask your first question.</div>`;
-    return;
-  }
-  el.innerHTML = chatItems.slice(0,10).map(item => `
+function renderHistory(){
+  const el=document.getElementById('chatList');
+  if(!history.length){el.innerHTML=`<div class="empty"><div class="empty-icon">💬</div>Upload a PDF and ask your first question.</div>`;return}
+  el.innerHTML=history.slice(0,10).map(h=>`
     <div class="chat-item">
-      <div class="chat-q"><strong>Q:</strong> ${escHtml(item.q)}</div>
-      <div class="chat-a">${escHtml(item.a).replace(/\n/g,'<br/>')}</div>
+      <div class="chat-q"><span>Q</span> ${esc(h.q)}</div>
+      <div class="chat-a">${esc(h.a).replace(/\n/g,'<br/>')}</div>
       <div class="chat-chips">
-        <span class="chip chip-latency">⚡ ${item.lat} ms</span>
-        <span class="chip chip-cost">💰 $${item.cost.toFixed(8)}</span>
-        <span class="chip chip-sources">📄 ${item.srcs} src</span>
+        <span class="chip chip-lat">⚡ ${h.lat} ms</span>
+        <span class="chip chip-cost">💰 $${h.cost.toFixed(8)}</span>
+        <span class="chip chip-src">📄 ${h.srcs} src</span>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-// ── Metrics ──
-async function refreshMetrics() {
-  try {
-    const res = await fetch(`${API}/metrics`);
-    const d = await res.json();
-
-    // Sidebar mini stats
-    document.getElementById('statTotal').textContent = d.total_queries;
-    document.getElementById('statAvgLat').textContent = d.avg_latency_ms ? `${d.avg_latency_ms} ms` : '—';
-    document.getElementById('statCost').textContent = d.total_cost_usd ? `$${d.total_cost_usd}` : '—';
-    document.getElementById('statSuccess').textContent = d.success_rate ? `${d.success_rate}%` : '—';
-
-    // Metrics tab
-    document.getElementById('m-total').textContent = d.total_queries;
-    document.getElementById('m-avg').textContent = `${d.avg_latency_ms} ms`;
-    document.getElementById('m-p50').textContent = `${d.p50_latency_ms} ms`;
-    document.getElementById('m-p95').textContent = `${d.p95_latency_ms} ms`;
-    document.getElementById('m-cost').textContent = `$${d.total_cost_usd}`;
-    document.getElementById('m-avg-cost').textContent = `$${d.avg_cost_per_query}`;
-    document.getElementById('m-success').textContent = `${d.success_rate}%`;
-
-    renderBarChart('latencyChart', d.logs, 'latency_ms', 'latency-bar');
-    renderBarChart('costChart', d.logs, 'cost_usd', 'cost-bar', 1e6);
-    renderLogTable(d.logs);
-  } catch(_) {}
+async function refreshMetrics(){
+  try{
+    const d=await(await fetch(`${API}/metrics`)).json();
+    document.getElementById('sTotal').textContent=d.total_queries||'—';
+    document.getElementById('sLat').textContent=d.avg_latency_ms?`${d.avg_latency_ms} ms`:'—';
+    document.getElementById('sCost').textContent=d.total_cost_usd?`$${d.total_cost_usd}`:'—';
+    document.getElementById('sRate').textContent=d.success_rate?`${d.success_rate}%`:'—';
+    document.getElementById('mTotal').textContent=d.total_queries;
+    document.getElementById('mAvg').textContent=`${d.avg_latency_ms} ms`;
+    document.getElementById('mP50').textContent=`${d.p50_latency_ms} ms`;
+    document.getElementById('mP95').textContent=`${d.p95_latency_ms} ms`;
+    document.getElementById('mCost').textContent=`$${d.total_cost_usd}`;
+    document.getElementById('mAvgCost').textContent=`$${d.avg_cost_per_query}`;
+    document.getElementById('mSuccess').textContent=`${d.success_rate}%`;
+    drawBars('latChart',d.logs,'latency_ms',1,v=>v>1500?'var(--red)':v>800?'var(--amber)':'var(--accent)');
+    drawBars('costChart',d.logs,'cost_usd',1e6,()=>'var(--green)');
+    renderLogs(d.logs);
+  }catch(_){}
 }
 
-function renderBarChart(id, logs, key, cls, scale=1) {
-  const el = document.getElementById(id);
-  if (!logs.length) { el.innerHTML = `<div class="empty" style="width:100%">No data yet.</div>`; return; }
-  const vals = logs.slice(0, 20).reverse().map(l => l[key] * scale);
-  const max = Math.max(...vals) || 1;
-  el.innerHTML = vals.map((v, i) => `
-    <div class="bar-wrap">
-      <div class="bar ${cls}" style="height:${Math.max(4, (v/max)*92)}px" title="${v.toFixed(4)}"></div>
-      <div class="bar-label">#${logs.length - vals.length + i + 1}</div>
-    </div>
-  `).join('');
+function drawBars(id,logs,key,scale,colorFn){
+  const el=document.getElementById(id);
+  if(!logs||!logs.length){el.innerHTML=`<div class="empty" style="width:100%;padding:20px 0">No data yet.</div>`;return}
+  const vals=logs.slice(0,24).reverse().map(l=>l[key]*scale);
+  const max=Math.max(...vals)||1;
+  el.innerHTML=vals.map((v,i)=>`<div class="bar-wrap"><div class="bar" style="height:${Math.max(3,(v/max)*90)}px;background:${colorFn(v)};" title="${v.toFixed(3)}"></div><div class="bar-label">#${i+1}</div></div>`).join('');
 }
 
-function renderLogTable(logs) {
-  const tbody = document.getElementById('logBody');
-  if (!logs.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📋</div>No queries logged yet.</div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = logs.map(l => `
-    <tr>
-      <td class="mono" style="color:var(--muted)">${l.id}</td>
-      <td class="mono" style="color:var(--muted);font-size:11px">${l.timestamp.replace('T',' ').split('.')[0]}</td>
-      <td style="max-width:240px;color:var(--text)">${escHtml(l.query.slice(0,80))}${l.query.length>80?'…':''}</td>
-      <td class="mono" style="color:var(--amber)">${l.latency_ms} ms</td>
-      <td class="mono" style="color:var(--green)">$${l.cost_usd.toFixed(8)}</td>
-      <td class="${l.success ? 'ok' : 'fail'} mono">${l.success ? '✓ ok' : '✗ fail'}</td>
-    </tr>
-  `).join('');
+function renderLogs(logs){
+  const tb=document.getElementById('logBody');
+  if(!logs||!logs.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-icon">📋</div>No queries logged yet.</div></td></tr>`;return}
+  tb.innerHTML=logs.map(l=>`<tr>
+    <td style="font-family:var(--mono);color:var(--muted);font-size:11px">${l.id}</td>
+    <td style="font-family:var(--mono);color:var(--muted);font-size:10px">${l.timestamp.replace('T',' ').split('.')[0]}</td>
+    <td style="max-width:220px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--text)">${esc(l.query.slice(0,80))}${l.query.length>80?'…':''}</td>
+    <td style="font-family:var(--mono);color:${l.latency_ms>1000?'var(--red)':l.latency_ms>800?'var(--amber)':'var(--green)'}">${l.latency_ms} ms</td>
+    <td style="font-family:var(--mono);color:var(--green)">$${l.cost_usd.toFixed(8)}</td>
+    <td class="${l.success?'status-ok':'status-fail'}">${l.success?'✓ ok':'✗ fail'}</td>
+  </tr>`).join('');
 }
 
-async function resetLogs() {
-  if (!confirm('Clear all query logs?')) return;
-  await fetch(`${API}/metrics/reset`, { method: 'DELETE' });
-  chatItems = [];
-  renderChat();
+async function resetLogs(){
+  if(!confirm('Clear all query logs?'))return;
+  await fetch(`${API}/metrics/reset`,{method:'DELETE'});
+  history=[];
+  renderHistory();
   refreshMetrics();
 }
 
-// ── Tabs ──
-function switchTab(name) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-  document.getElementById(`tab-${name}`).classList.add('active');
-  event.target.classList.add('active');
-  if (name === 'metrics' || name === 'logs') refreshMetrics();
+function switchTab(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(`panel-${name}`).classList.add('on');
+  el.classList.add('on');
+  if(name==='metrics'||name==='logs')refreshMetrics();
 }
 
-function showError(msg) {
-  const el = document.getElementById('errorMsg');
-  el.textContent = msg;
-  el.classList.toggle('visible', !!msg);
-}
+function showErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.classList.toggle('show',!!msg)}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// Init
 refreshMetrics();
-setInterval(refreshMetrics, 30000);
+setInterval(refreshMetrics,30000);
 </script>
 </body>
 </html>
